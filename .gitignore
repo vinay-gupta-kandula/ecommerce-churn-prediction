@@ -1,0 +1,85 @@
+####################################
+# OS / Editor files
+####################################
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+*.tmp
+*.bak
+.vscode/
+.idea/
+
+####################################
+# Python cache & environments
+####################################
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.env
+.venv/
+venv/
+env/
+pip-wheel-metadata/
+
+####################################
+# Jupyter Notebook
+####################################
+.ipynb_checkpoints/
+
+####################################
+# Logs
+####################################
+logs/
+*.log
+
+####################################
+# Data files (IMPORTANT)
+####################################
+# Ignore raw datasets (large / licensed)
+data/raw/*.xlsx
+data/raw/*.csv
+data/raw/*.parquet
+
+# Allow required JSON artifacts (DO NOT IGNORE)
+!data/raw/data_quality_summary.json
+
+# Processed data (generated, not source)
+data/processed/*.csv
+data/processed/*.parquet
+
+# Allow required processed JSON artifacts later
+!data/processed/cleaning_statistics.json
+!data/processed/validation_report.json
+!data/processed/feature_info.json
+
+####################################
+# Models
+####################################
+models/*.pkl
+models/*.joblib
+
+####################################
+# Streamlit
+####################################
+.streamlit/secrets.toml
+
+####################################
+# Docker
+####################################
+*.pid
+
+####################################
+# Testing / coverage
+####################################
+.coverage
+htmlcov/
+.pytest_cache/
+
+####################################
+# Misc
+####################################
+*.zip
+*.tar
+*.tar.gz
