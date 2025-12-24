@@ -1,0 +1,27 @@
+{
+    "best_model": "random_forest",
+    "evaluation_metrics": {
+        "roc_auc": 0.9988,
+        "precision": 0.9975,
+        "recall": 0.9393,
+        "f1_score": 0.9675
+    },
+    "all_models": {
+        "logistic_regression": {
+            "roc_auc": 0.9949,
+            "precision": 0.9924,
+            "recall": 0.6121,
+            "f1_score": 0.7572
+        },
+        "random_forest": {
+            "roc_auc": 0.9988,
+            "precision": 0.9975,
+            "recall": 0.9393,
+            "f1_score": 0.9675
+        }
+    },
+    "train_samples": 3018,
+    "test_samples": 1294,
+    "churn_rate_train": 33.1,
+    "churn_rate_test": 33.08
+}
