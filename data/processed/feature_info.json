@@ -1,0 +1,36 @@
+{
+    "total_customers": 4312,
+    "total_features": 20,
+    "churn_rate_percent": 33.09,
+    "churn_definition": "No purchase in last 90 days",
+    "feature_categories": {
+        "rfm": [
+            "recency_days",
+            "frequency",
+            "monetary_value",
+            "avg_order_value"
+        ],
+        "transaction_behavior": [
+            "total_transactions",
+            "total_quantity",
+            "avg_quantity_per_txn",
+            "unique_products",
+            "unique_invoices"
+        ],
+        "time_based": [
+            "customer_tenure_days",
+            "days_since_first_purchase",
+            "days_since_last_purchase",
+            "avg_days_between_purchases"
+        ],
+        "price_metrics": [
+            "min_price",
+            "max_price",
+            "avg_price",
+            "price_std"
+        ],
+        "geography": [
+            "country_count"
+        ]
+    }
+}
