@@ -2,14 +2,14 @@
     "total_rows": 525461,
     "total_columns": 8,
     "missing_values": {
-        "invoice": 0,
-        "stockcode": 0,
-        "description": 2928,
-        "quantity": 0,
-        "invoicedate": 0,
-        "price": 0,
-        "customerid": 107927,
-        "country": 0
+        "Invoice": 0,
+        "StockCode": 0,
+        "Description": 2928,
+        "Quantity": 0,
+        "InvoiceDate": 0,
+        "Price": 0,
+        "Customer ID": 107927,
+        "Country": 0
     },
     "duplicate_rows": 6865,
     "date_range": {
@@ -17,8 +17,7 @@
         "end": "2010-12-09 20:01:00"
     },
     "negative_quantities": 12326,
-    "zero_or_negative_prices": 3690,
-    "unique_customers": 4383,
-    "unique_products": 4632,
-    "unique_countries": 40
+    "cancelled_invoices": 10206,
+    "missing_customer_ids": 107927,
+    "missing_customer_ids_percentage": 20.54
 }
