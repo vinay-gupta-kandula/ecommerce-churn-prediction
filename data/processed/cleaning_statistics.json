@@ -1,0 +1,10 @@
+{
+    "initial_rows": 525461,
+    "removed_missing_customerid": 107927,
+    "removed_cancelled_invoices": 9839,
+    "removed_negative_quantities": 0,
+    "removed_zero_or_negative_prices": 31,
+    "removed_duplicates": 6748,
+    "final_rows": 400916,
+    "retention_rate_percent": 76.3
+}
