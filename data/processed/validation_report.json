@@ -1,12 +1,20 @@
 {
-    "initial_rows": 525461,
-    "final_rows": 400916,
-    "retention_rate_percent": 76.3,
-    "date_range": {
-        "start": "2009-12-01 07:45:00",
-        "end": "2010-12-09 20:01:00"
-    },
+    "total_rows": 400916,
+    "duplicate_rows": 0,
+    "invalid_quantity_rows": 0,
+    "invalid_price_rows": 0,
+    "future_dated_rows": 0,
     "unique_customers": 4312,
     "unique_products": 4017,
-    "validation_status": "PASS"
+    "unique_countries": 37,
+    "missing_value_percentage": {
+        "invoice": 0.0,
+        "stockcode": 0.0,
+        "description": 0.0,
+        "quantity": 0.0,
+        "invoicedate": 0.0,
+        "price": 0.0,
+        "customerid": 0.0,
+        "country": 0.0
+    }
 }
