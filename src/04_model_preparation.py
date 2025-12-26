@@ -1,134 +1,95 @@
+"""
+Phase 6.1: Model Preparation
+
+Prepares customer-level feature dataset for modeling.
+- Removes identifiers
+- Selects numerical features only
+- Stratified train/validation/test split
+- Scales numerical features
+- Saves scaler and prepared datasets
+"""
+
 import pandas as pd
-from pathlib import Path
+import numpy as np
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
-from sklearn.linear_model import LogisticRegression
-from sklearn.ensemble import RandomForestClassifier
-from sklearn.metrics import (
-    roc_auc_score,
-    precision_score,
-    recall_score,
-    f1_score
-)
 import joblib
-import json
+from pathlib import Path
 
-# =========================
-# Paths
-# =========================
-DATA_PATH = Path("data/processed/customer_features.csv")
-MODEL_DIR = Path("models")
-OUTPUT_DIR = Path("data/processed")
-
-MODEL_DIR.mkdir(parents=True, exist_ok=True)
-OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
-
-
-def evaluate_model(model, X_test, y_test):
-    """Return JSON-safe evaluation metrics"""
-    y_prob = model.predict_proba(X_test)[:, 1]
-    y_pred = (y_prob >= 0.5).astype(int)
-
-    return {
-        "roc_auc": float(round(roc_auc_score(y_test, y_prob), 4)),
-        "precision": float(round(precision_score(y_test, y_pred), 4)),
-        "recall": float(round(recall_score(y_test, y_pred), 4)),
-        "f1_score": float(round(f1_score(y_test, y_pred), 4))
-    }
+DATA_PATH = "data/processed/customer_features.csv"
+OUTPUT_DIR = "data/processed"
+MODEL_DIR = "models"
+RANDOM_STATE = 42
 
 
 def main():
-    print("Starting Phase 5: Model Training & Evaluation...")
+    print("=== PHASE 6.1: MODEL PREPARATION ===")
 
-    # -------------------------
-    # Load data
-    # -------------------------
+    # Load dataset
     df = pd.read_csv(DATA_PATH)
+    print(f"Loaded dataset: {df.shape}")
 
+    # Target
     y = df["churn"]
-    X = df.drop(columns=["customerid", "churn"])
 
-    # Encode (safe even if no categoricals)
-    X = pd.get_dummies(X, drop_first=True)
+    # Drop target & identifier
+    X = df.drop(columns=["churn"])
+    if "customerid" in X.columns:
+        X = X.drop(columns=["customerid"])
 
-    # -------------------------
-    # Train/Test split
-    # -------------------------
-    X_train, X_test, y_train, y_test = train_test_split(
+    # Select numerical features only
+    X = X.select_dtypes(include=[np.number])
+
+    print(f"Numerical feature matrix shape: {X.shape}")
+    print("Churn rate:", round(y.mean(), 3))
+
+    # Stratified split: Train (70%) / Temp (30%)
+    X_train, X_temp, y_train, y_temp = train_test_split(
         X,
         y,
         test_size=0.30,
         stratify=y,
-        random_state=42
+        random_state=RANDOM_STATE
     )
 
-    # -------------------------
-    # Scaling
-    # -------------------------
+    # Validation (15%) / Test (15%)
+    X_val, X_test, y_val, y_test = train_test_split(
+        X_temp,
+        y_temp,
+        test_size=0.50,
+        stratify=y_temp,
+        random_state=RANDOM_STATE
+    )
+
+    print("Split sizes:")
+    print("Train:", X_train.shape[0])
+    print("Validation:", X_val.shape[0])
+    print("Test:", X_test.shape[0])
+
+    # Scale numerical features
     scaler = StandardScaler()
     X_train_scaled = scaler.fit_transform(X_train)
+    X_val_scaled = scaler.transform(X_val)
     X_test_scaled = scaler.transform(X_test)
 
-    joblib.dump(scaler, MODEL_DIR / "scaler.pkl")
+    # Create directories
+    Path(MODEL_DIR).mkdir(exist_ok=True)
+    Path(OUTPUT_DIR).mkdir(exist_ok=True)
 
-    # -------------------------
-    # Models
-    # -------------------------
-    models = {
-        "logistic_regression": LogisticRegression(
-            max_iter=1000,
-            class_weight="balanced",
-            random_state=42
-        ),
-        "random_forest": RandomForestClassifier(
-            n_estimators=300,
-            max_depth=10,
-            min_samples_split=5,
-            class_weight="balanced",
-            random_state=42,
-            n_jobs=-1
-        )
-    }
+    # Save scaler
+    joblib.dump(scaler, f"{MODEL_DIR}/scaler.pkl")
 
-    results = {}
+    # Save prepared datasets
+    np.save(f"{OUTPUT_DIR}/X_train.npy", X_train_scaled)
+    np.save(f"{OUTPUT_DIR}/X_val.npy", X_val_scaled)
+    np.save(f"{OUTPUT_DIR}/X_test.npy", X_test_scaled)
 
-    # -------------------------
-    # Train & evaluate
-    # -------------------------
-    for name, model in models.items():
-        print(f"Training {name}...")
-        model.fit(X_train_scaled, y_train)
-        metrics = evaluate_model(model, X_test_scaled, y_test)
-        results[name] = metrics
-        print(f"{name} metrics:", metrics)
+    np.save(f"{OUTPUT_DIR}/y_train.npy", y_train.values)
+    np.save(f"{OUTPUT_DIR}/y_val.npy", y_val.values)
+    np.save(f"{OUTPUT_DIR}/y_test.npy", y_test.values)
 
-    # -------------------------
-    # Select best model
-    # -------------------------
-    best_model_name = max(results, key=lambda k: results[k]["roc_auc"])
-    best_model = models[best_model_name]
-
-    joblib.dump(best_model, MODEL_DIR / "best_model.pkl")
-
-    # -------------------------
-    # Save metrics (JSON-safe)
-    # -------------------------
-    model_metrics = {
-        "best_model": best_model_name,
-        "evaluation_metrics": results[best_model_name],
-        "all_models": results,
-        "train_samples": int(len(X_train)),
-        "test_samples": int(len(X_test)),
-        "churn_rate_train": float(round(y_train.mean() * 100, 2)),
-        "churn_rate_test": float(round(y_test.mean() * 100, 2))
-    }
-
-    with open(OUTPUT_DIR / "model_metrics.json", "w") as f:
-        json.dump(model_metrics, f, indent=4)
-
-    print("\nPhase 5 completed successfully ✅")
-    print(f"Best model: {best_model_name}")
-    print("Best model metrics:", results[best_model_name])
+    print("✅ Model preparation completed successfully")
+    print("Scaler and datasets saved")
 
 
 if __name__ == "__main__":
