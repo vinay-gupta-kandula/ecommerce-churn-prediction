@@ -1,0 +1,59 @@
+{
+  "project_title": "E-Commerce Customer Churn Prediction",
+  "student_name": "Vinay Kandula",
+  "repository_url": "https://github.com/vinay-gupta-kandula/ecommerce-churn-prediction",
+  "live_application_url": "https://ecommerce-churn-prediction-vinay.streamlit.app/",
+  "problem_statement": "Predict customer churn for an e-commerce business using historical transaction behavior to enable proactive retention strategies.",
+  "dataset": {
+    "name": "Online Retail II Dataset",
+    "source": "https://archive.ics.uci.edu/ml/datasets/Online+Retail+II",
+    "time_period": "2009-12 to 2011-12",
+    "granularity": "Transactional data aggregated to customer level"
+  },
+  "churn_definition": {
+    "definition": "A customer is labeled as churned if they make no purchases within a 120-day observation window following the training cutoff date.",
+    "churn_rate": 0.364
+  },
+  "modeling": {
+    "models_evaluated": [
+      "Logistic Regression",
+      "Decision Tree",
+      "Random Forest",
+      "Gradient Boosting",
+      "Neural Network (MLP)"
+    ],
+    "final_model": "Gradient Boosting Classifier",
+    "validation_strategy": "Strict temporal split with leakage-safe feature engineering and 5-fold stratified cross-validation"
+  },
+  "final_model_performance": {
+    "test_set_metrics": {
+      "accuracy": 0.663,
+      "precision": 0.536,
+      "recall": 0.551,
+      "f1_score": 0.543,
+      "roc_auc": 0.715
+    },
+    "cross_validation": {
+      "mean_roc_auc": 0.741,
+      "std_roc_auc": 0.018
+    }
+  },
+  "deployment": {
+    "platform": "Streamlit Community Cloud",
+    "features": [
+      "Single customer churn prediction",
+      "Batch CSV churn prediction",
+      "Model performance dashboard",
+      "Probability-based churn risk interpretation"
+    ]
+  },
+  "business_impact": {
+    "objective": "Reduce customer churn through early identification of high-risk customers",
+    "assumptions": {
+      "average_customer_lifetime_value": 500,
+      "retention_offer_cost": 50
+    },
+    "expected_benefit": "Improved customer retention with favorable cost-benefit tradeoff by prioritizing recall of churners"
+  },
+  "status": "Completed and deployed successfully"
+}
