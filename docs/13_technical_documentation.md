@@ -1,6 +1,8 @@
 # Technical Documentation
 
 ## System Architecture
+The pipeline is modular, reproducible, and leakage-safe, with strict temporal separation between training and evaluation.
+
 The system follows an end-to-end ML pipeline:
 Data acquisition → cleaning → feature engineering → modeling → evaluation → deployment.
 
@@ -19,6 +21,8 @@ Data acquisition → cleaning → feature engineering → modeling → evaluatio
 ## Model Architecture
 Selected Model: Gradient Boosting Classifier  
 Reason: Best balance of ROC-AUC and stability across folds.
+Gradient Boosting captures non-linear relationships in customer behavior while remaining interpretable through feature importance.
+
 
 ## API Reference
 Prediction API implemented in `app/predict.py`:
