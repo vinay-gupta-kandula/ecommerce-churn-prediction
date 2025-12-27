@@ -1,23 +1,26 @@
-📦 Deployment Guide
-Platform
+# 📦 Deployment Guide
 
-Streamlit Community Cloud (Free Tier)
+## Platform
+**Streamlit Community Cloud (Free Tier)**
 
-✅ Prerequisites
+---
 
-Before deployment, ensure the following:
+## ✅ Prerequisites
 
-GitHub account (logged in)
+Before deployment, ensure the following requirements are met:
 
-Repository is public
+- GitHub account (logged in)
+- Repository is **public**
+- `streamlit_app.py` exists inside the `app/` folder
+- Trained model and imputer saved inside `models/`
+- `requirements.txt` present in the root directory
 
-streamlit_app.py exists in app/ folder
+---
 
-Trained model and imputer saved in models/
+## 📂 Required Repository Structure
 
-requirements.txt present in root directory
+```
 
-📂 Required Repository Structure
 ecommerce-churn-prediction/
 ├── app/
 │   ├── streamlit_app.py
@@ -28,9 +31,15 @@ ecommerce-churn-prediction/
 ├── requirements.txt
 └── README.md
 
-📄 requirements.txt
+```
+
+---
+
+## 📄 requirements.txt
 
 Ensure the following dependencies are listed:
+
+```
 
 streamlit==1.28.0
 pandas==2.0.0
@@ -39,72 +48,80 @@ scikit-learn==1.3.0
 joblib==1.3.0
 plotly==5.17.0
 
-🚀 Step-by-Step Deployment
-1️⃣ Prepare Repository
+````
 
-Commit and push all final files to GitHub
+---
 
-Verify Streamlit app runs locally:
+## 🚀 Step-by-Step Deployment
 
+### 1️⃣ Prepare Repository
+
+- Commit and push all final files to GitHub
+- Verify the Streamlit app runs locally:
+
+```bash
 streamlit run app/streamlit_app.py
+````
 
-2️⃣ Deploy on Streamlit Cloud
+---
 
-Go to 👉 https://share.streamlit.io
+### 2️⃣ Deploy on Streamlit Cloud
 
-Sign in with GitHub
+1. Go to 👉 [https://share.streamlit.io](https://share.streamlit.io)
+2. Sign in with GitHub
+3. Click **New app**
+4. Select:
 
-Click “New app”
+   * **Repository:** `ecommerce-churn-prediction`
+   * **Branch:** `main`
+   * **Main file path:** `app/streamlit_app.py`
+5. Click **Deploy**
 
-Select:
+⏳ Initial build may take **2–5 minutes**.
 
-Repository: ecommerce-churn-prediction
+---
 
-Branch: main
+## 🔍 Post-Deployment Checks
 
-Main file path: app/streamlit_app.py
+After deployment, validate the following:
 
-Click Deploy
+* App loads without errors
+* Single customer prediction works
+* Batch CSV upload works
+* Model metrics and visualizations display correctly
+* No runtime errors in Streamlit logs
 
-⏳ Initial build takes 2–5 minutes.
+---
 
-🔍 Post-Deployment Checks
+## 🌐 Live Application URL
 
-After deployment, perform the following validations:
+**Deployed Streamlit App:**
+👉 [https://ecommerce-churn-prediction-vinay.streamlit.app/](https://ecommerce-churn-prediction-vinay.streamlit.app/)
 
-App loads without errors
+---
 
-Single customer prediction works
+## 🧪 Testing Checklist
 
-Batch CSV upload works
+* ✔ App loads successfully
+* ✔ Single prediction works
+* ✔ Batch prediction works
+* ✔ All visualizations display
+* ✔ No errors in logs
 
-Model metrics and visualizations display correctly
+---
 
-No runtime errors in Streamlit logs
+## 📌 Notes
 
-🌐 Live Application URL
+* Model and imputer are loaded using `joblib`
+* Resources are cached using `@st.cache_resource`
+* Application is stateless and safe for cloud deployment
 
-Deployed Streamlit App:
-👉 https://ecommerce-churn-prediction-vinay.streamlit.app/
+---
 
-🧪 Testing Checklist
+## 🟢 Deployment Status
 
-✔ App loads successfully
-✔ Single prediction works
-✔ Batch prediction works
-✔ All visualizations display
-✔ No errors in logs
+* **Status:** ✅ Successfully deployed
+* **Platform:** Streamlit Community Cloud
+* **Cost:** Free
 
-📌 Notes
 
-Model and imputer are loaded using joblib
-
-Resources are cached using @st.cache_resource
-
-App is stateless and safe for cloud deployment
-
-🟢 Deployment Status
-
-Status: ✅ Successfully deployed
-Platform: Streamlit Community Cloud
-Cost: Free
