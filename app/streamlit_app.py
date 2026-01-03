@@ -37,16 +37,39 @@ def load_assets():
 model, imputer = load_assets()
 
 # STRICT FEATURE LIST (30 FEATURES)
+# 1. Update this list to match the EXACT order you provided
 FEATURE_COLUMNS = [
-    "frequency", "monetary_value", "avg_order_value", "total_quantity", 
-    "unique_products", "min_unit_price", "max_unit_price", "avg_unit_price", 
-    "std_unit_price", "country_count", "customer_tenure_days", "avg_basket_size", 
-    "std_basket_size", "max_basket_size", "purchases_last_30_days", 
-    "purchases_last_60_days", "purchases_last_90_days", "recency_score", 
-    "freq_score", "monetary_score", "rfm_total", "monetary_per_txn", 
-    "quantity_per_txn", "tenure_velocity", "variety_ratio", "price_stability", 
-    "basket_growth", "log_monetary", "log_frequency", "revenue_per_day"
+    "frequency", "total_quantity", "max_unit_price", "country_count",
+    "std_basket_size", "purchases_last_60_days", "freq_score", "monetary_per_txn",
+    "variety_ratio", "log_monetary", "monetary_value", "unique_products",
+    "avg_unit_price", "customer_tenure_days", "max_basket_size", "purchases_last_90_days",
+    "monetary_score", "quantity_per_txn", "price_stability", "log_frequency",
+    "avg_order_value", "min_unit_price", "std_unit_price", "avg_basket_size",
+    "purchases_last_30_days", "recency_score", "rfm_total", "tenure_velocity",
+    "basket_growth", "revenue_per_day"
 ]
+
+# 2. In your Batch Prediction Page (Line 145 area), use this logic:
+if file:
+    df_batch = pd.read_csv(file)
+    
+    # Clean up column names (removes accidental spaces)
+    df_batch.columns = df_batch.columns.str.strip().str.lower()
+    
+    # Verify if any column is missing
+    missing = [c for c in FEATURE_COLUMNS if c not in df_batch.columns]
+    
+    if missing:
+        st.error(f"❌ Missing columns: {missing}")
+    else:
+        # CRITICAL: This line re-orders the CSV to match the Imputer's training order
+        X_batch = df_batch[FEATURE_COLUMNS]
+        
+        # Now transform will work without the ValueError
+        X_imp = imputer.transform(X_batch)
+        
+        probs = model.predict_proba(X_imp)[:, 1]
+        # ... rest of your code
 
 OPTIMAL_THRESHOLD = 0.521
 
