@@ -37,7 +37,6 @@ def load_assets():
 model, imputer = load_assets()
 
 # THE EXACT 30 FEATURES IN THE ORDER YOUR MODEL EXPECTS
-# THE FINAL CALIBRATED FEATURE LIST
 FEATURE_COLUMNS = [
     "frequency", "total_quantity", "max_unit_price", "country_count",
     "std_basket_size", "purchases_last_60_days", "freq_score", "monetary_per_txn",
@@ -51,21 +50,6 @@ FEATURE_COLUMNS = [
 ]
 
 OPTIMAL_THRESHOLD = 0.521
-
-# Ensure the rest of your Page 4 code stays like this:
-if file is not None:
-    df_batch = pd.read_csv(file)
-    df_batch.columns = df_batch.columns.str.strip().str.lower()
-    
-    missing = [c for c in FEATURE_COLUMNS if c not in df_batch.columns]
-    if missing:
-        st.error(f"❌ Missing columns: {missing}")
-    else:
-        X_batch = df_batch[FEATURE_COLUMNS]
-        X_imp = imputer.transform(X_batch)
-        # ... predict ...
-
-
 
 # ======================================================
 # SIDEBAR NAVIGATION
