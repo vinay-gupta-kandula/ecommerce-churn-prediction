@@ -9,7 +9,7 @@ import seaborn as sns
 from pathlib import Path
 
 # ======================================================
-# GLOBAL CONFIGURATION
+# 1. GLOBAL CONFIGURATION
 # ======================================================
 st.set_page_config(
     page_title="E-Commerce Churn Dashboard",
@@ -36,8 +36,7 @@ def load_assets():
 
 model, imputer = load_assets()
 
-# STRICT FEATURE LIST (30 FEATURES)
-# 1. Update this list to match the EXACT order you provided
+# THE EXACT 30 FEATURES IN THE ORDER YOUR MODEL EXPECTS
 FEATURE_COLUMNS = [
     "frequency", "total_quantity", "max_unit_price", "country_count",
     "std_basket_size", "purchases_last_60_days", "freq_score", "monetary_per_txn",
@@ -48,28 +47,6 @@ FEATURE_COLUMNS = [
     "purchases_last_30_days", "recency_score", "rfm_total", "tenure_velocity",
     "basket_growth", "revenue_per_day"
 ]
-
-# 2. In your Batch Prediction Page (Line 145 area), use this logic:
-if file:
-    df_batch = pd.read_csv(file)
-    
-    # Clean up column names (removes accidental spaces)
-    df_batch.columns = df_batch.columns.str.strip().str.lower()
-    
-    # Verify if any column is missing
-    missing = [c for c in FEATURE_COLUMNS if c not in df_batch.columns]
-    
-    if missing:
-        st.error(f"❌ Missing columns: {missing}")
-    else:
-        # CRITICAL: This line re-orders the CSV to match the Imputer's training order
-        X_batch = df_batch[FEATURE_COLUMNS]
-        
-        # Now transform will work without the ValueError
-        X_imp = imputer.transform(X_batch)
-        
-        probs = model.predict_proba(X_imp)[:, 1]
-        # ... rest of your code
 
 OPTIMAL_THRESHOLD = 0.521
 
@@ -91,121 +68,125 @@ page = st.sidebar.radio("Go to Page:", [
 if page == "1. Home":
     st.title("📊 E-Commerce Churn Prediction System")
     st.markdown("""
-    ### Welcome
-    This interactive dashboard predicts the likelihood of customers churning from an e-commerce platform. 
-    It is powered by a **Tuned Logistic Regression** model designed to maximize recall for high-impact business decisions.
+    ### Project Overview
+    This system uses machine learning to identify high-risk customers likely to stop purchasing. 
+    By predicting churn before it happens, businesses can deploy targeted retention strategies.
     
-    ### Core Logic
-    - **Target:** Customers who make no purchases for 120 days.
-    - **Algorithm:** Logistic Regression (Balanced).
-    - **Features:** Behavioral RFM metrics + Temporal Ratios.
+    ### Core Model
+    - **Algorithm:** Tuned Logistic Regression
+    - **Optimization:** Balanced Class Weights
+    - **Target:** Probability of 120-day inactivity.
     """)
 
 # ======================================================
 # PAGE 2: DATA INSIGHTS
 # ======================================================
 elif page == "2. Data Insights":
-    st.header("📈 Deep Dive into Training Data")
+    st.header("📈 Training Data Distribution")
     if DATA_PATH.exists():
-        df = pd.read_csv(DATA_PATH)
+        df_eda = pd.read_csv(DATA_PATH)
         c1, c2 = st.columns(2)
         with c1:
-            st.subheader("Customer Balance")
+            st.subheader("Churn vs Active Balance")
             fig, ax = plt.subplots()
-            sns.countplot(x='churn', data=df, palette='viridis', ax=ax)
+            sns.countplot(x='churn', data=df_eda, palette='viridis', ax=ax)
             st.pyplot(fig)
         with c2:
-            st.subheader("Average Spending Patterns")
+            st.subheader("Spending behavior (Monetary Per Txn)")
             fig, ax = plt.subplots()
-            sns.boxplot(x='churn', y='monetary_per_txn', data=df, ax=ax)
+            sns.boxplot(x='churn', y='monetary_per_txn', data=df_eda, ax=ax)
             ax.set_ylim(0, 1000)
             st.pyplot(fig)
     else:
-        st.warning("Data file not found for visualization.")
+        st.warning("Data file not found at 'data/processed/customer_features.csv'.")
 
 # ======================================================
 # PAGE 3: INDIVIDUAL PREDICTION
 # ======================================================
 elif page == "3. Individual Prediction":
-    st.header("🔍 Manual Customer Assessment")
-    with st.form("manual_form"):
+    st.header("🔍 Single Customer Assessment")
+    with st.form("manual_entry"):
         cols = st.columns(3)
-        inputs = {}
+        user_input = {}
         for i, feat in enumerate(FEATURE_COLUMNS):
             with cols[i % 3]:
-                inputs[feat] = st.number_input(feat.replace("_", " ").title(), value=0.0)
-        btn = st.form_submit_button("Run Model")
+                user_input[feat] = st.number_input(feat.replace("_", " ").title(), value=0.0)
+        submit = st.form_submit_button("Run Assessment")
     
-    if btn:
-        input_df = pd.DataFrame([inputs])
-        # Force column order
-        X_final = input_df[FEATURE_COLUMNS]
-        X_imp = imputer.transform(X_final)
+    if submit:
+        # Convert to DF and reorder columns
+        input_df = pd.DataFrame([user_input])[FEATURE_COLUMNS]
+        X_imp = imputer.transform(input_df)
         prob = model.predict_proba(X_imp)[0, 1]
         
+        st.subheader("Assessment Result")
         if prob >= OPTIMAL_THRESHOLD:
-            st.error(f"High Risk Detected: {prob:.1%}")
+            st.error(f"🔴 HIGH RISK DETECTED ({prob:.1%})")
         else:
-            st.success(f"Low Risk Detected: {prob:.1%}")
+            st.success(f"🟢 LOW RISK DETECTED ({prob:.1%})")
 
 # ======================================================
 # PAGE 4: BATCH PREDICTION
 # ======================================================
 elif page == "4. Batch Prediction":
-    st.header("📁 Bulk Processing (CSV)")
-    file = st.file_uploader("Upload CSV", type="csv")
+    st.header("📁 Bulk Processing (CSV Upload)")
+    st.write("Upload a CSV file. The app will automatically clean and reorder columns.")
+    
+    # SOLVED NAME ERROR: Assigned variable 'file' here
+    file = st.file_uploader("Choose CSV File", type="csv")
+    
     if file:
-        df_raw = pd.read_csv(file)
-        df_raw.columns = df_raw.columns.str.strip() # Clean column names
+        df_batch = pd.read_csv(file)
+        # Clean columns: strip spaces and convert to lowercase
+        df_batch.columns = df_batch.columns.str.strip().str.lower()
         
-        # Validate all 30 features are present
-        missing = [c for c in FEATURE_COLUMNS if c not in df_raw.columns]
+        # Check if any columns are missing
+        missing = [c for c in FEATURE_COLUMNS if c not in df_batch.columns]
+        
         if missing:
-            st.error(f"Missing columns: {missing}")
+            st.error(f"❌ Missing columns in CSV: {missing}")
         else:
-            # Predict using the specified feature list order
-            X_batch = df_raw[FEATURE_COLUMNS]
+            # SOLVED VALUE ERROR: Reorder columns to match imputer
+            X_batch = df_batch[FEATURE_COLUMNS]
             X_imp = imputer.transform(X_batch)
             probs = model.predict_proba(X_imp)[:, 1]
             
-            df_raw['Probability'] = probs
-            df_raw['Result'] = np.where(probs >= OPTIMAL_THRESHOLD, "CHURN", "ACTIVE")
-            st.dataframe(df_raw[['Result', 'Probability'] + FEATURE_COLUMNS])
+            df_batch['Churn_Probability'] = probs
+            df_batch['Risk_Level'] = np.where(probs >= OPTIMAL_THRESHOLD, "HIGH", "LOW")
+            
+            st.write("### Prediction Results (Top 50)")
+            st.dataframe(df_batch[['Risk_Level', 'Churn_Probability'] + FEATURE_COLUMNS].head(50))
+            
+            csv_output = df_batch.to_csv(index=False).encode('utf-8')
+            st.download_button("📥 Download Results", data=csv_output, file_name="churn_results.csv")
 
 # ======================================================
 # PAGE 5: PERFORMANCE & DOCS
 # ======================================================
 else:
-    st.header("📘 Documentation & Performance")
+    st.header("📘 Documentation & Technical Evaluation")
     
-    # 5.1 Technical Metrics
     if SUBMISSION_PATH.exists():
         with open(SUBMISSION_PATH) as f:
-            sub = json.load(f)
-            perf = sub["final_model_performance"]["test_set_metrics"]
+            sub_json = json.load(f)
+            metrics = sub_json["final_model_performance"]["test_set_metrics"]
         
         m1, m2, m3, m4 = st.columns(4)
-        m1.metric("ROC-AUC", f"{perf['roc_auc']:.4f}")
-        m2.metric("Recall", f"{perf['recall']:.1%}")
-        m3.metric("Precision", f"{perf['precision']:.1%}")
-        m4.metric("Optimal Threshold", f"{OPTIMAL_THRESHOLD}")
-        
-    # 5.2 Documentation Text
-    st.divider()
-    st.markdown(f"""
-    ### Feature Glossary
-    - **Tenure Velocity:** The rate of purchase relative to customer age.
-    - **Variety Ratio:** Unique products divided by total quantity.
-    - **Price Stability:** Standard deviation of unit prices across orders.
+        m1.metric("ROC-AUC", f"{metrics['roc_auc']:.4f}")
+        m2.metric("Recall", f"{metrics['recall']:.1%}")
+        m3.metric("Precision", f"{metrics['precision']:.1%}")
+        m4.metric("Threshold", f"{OPTIMAL_THRESHOLD}")
     
-    ### Optimization Logic
-    The model is tuned to a probability threshold of **{OPTIMAL_THRESHOLD}**. 
-    Lowering this threshold increases **Recall** (capturing more churners) while increasing it improves **Precision** (avoiding false alarms).
+    st.divider()
+    st.markdown("""
+    ### Technical Glossary
+    - **Revenue Per Day:** Total spent divided by (Customer Tenure + 1).
+    - **Variety Ratio:** Count of unique products / Total quantity of items.
+    - **Tenure Velocity:** Rate of engagement over the customer's lifespan.
     """)
     
-    # 5.3 Visuals
     c1, c2 = st.columns(2)
     with c1:
-        st.image(str(BASE_DIR / "visualizations" / "roc_curve.png"), caption="ROC Analysis")
+        st.image(str(BASE_DIR / "visualizations" / "roc_curve.png"), caption="ROC Curve Analysis")
     with c2:
-        st.image(str(BASE_DIR / "visualizations" / "feature_importance.png"), caption="Key Prediction Drivers")
+        st.image(str(BASE_DIR / "visualizations" / "feature_importance.png"), caption="Top Predictive Features")
