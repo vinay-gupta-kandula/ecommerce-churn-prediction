@@ -1,3 +1,5 @@
+Here is the updated README with the values modified to match your latest evaluation results and model performance.
+
 # 📊 E-Commerce Customer Churn Prediction
 
 ## Project Overview
@@ -13,23 +15,25 @@ The solution covers the complete lifecycle: data acquisition, cleaning, feature 
 The goal of this project is to identify customers who are at high risk of churn so that the business can take proactive retention actions such as personalized offers, discounts, or engagement campaigns.
 
 The problem is formulated as a binary classification task:
-- **1** → Customer churned  
-- **0** → Customer remains active  
+
+* **1** → Customer churned
+* **0** → Customer remains active
 
 Accurate churn prediction enables:
-- Reduced revenue loss  
-- Improved customer lifetime value (CLV)  
-- Better targeting of marketing resources  
+
+* Reduced revenue loss
+* Improved customer lifetime value (CLV)
+* Better targeting of marketing resources
 
 ---
 
 ## Dataset
 
-- **Source:** UCI Machine Learning Repository  
-  https://archive.ics.uci.edu/ml/datasets/Online+Retail+II
-- **Raw Size:** ~540,000 rows × 8 columns  
-- **Final Customers:** ~3,200  
-- **Time Period:** 2009 – 2011  
+* **Source:** UCI Machine Learning Repository
+[https://archive.ics.uci.edu/ml/datasets/Online+Retail+II](https://archive.ics.uci.edu/ml/datasets/Online+Retail+II)
+* **Raw Size:** ~541,909 rows × 8 columns
+* **Final Customers:** ~3,223
+* **Time Period:** 2009 – 2011
 
 The dataset consists of invoice-level retail transactions, including purchase timestamps, quantities, prices, and customer identifiers.
 
@@ -40,12 +44,13 @@ The dataset consists of invoice-level retail transactions, including purchase ti
 ### 1. Data Cleaning
 
 Key preprocessing steps included:
-- Removing transactions with missing CustomerID
-- Filtering cancelled invoices
-- Removing negative quantities and prices
-- Deduplicating records
-- Standardizing date formats
-- Validating transactional consistency
+
+* Removing transactions with missing CustomerID
+* Filtering cancelled invoices
+* Removing negative quantities and prices
+* Deduplicating records
+* Standardizing date formats
+* Validating transactional consistency
 
 ---
 
@@ -53,44 +58,51 @@ Key preprocessing steps included:
 
 Customer-level features were engineered using only historical data before a fixed cutoff date to avoid temporal leakage:
 
-- **RFM Features**
-  - Recency (days since last purchase)
-  - Frequency (number of purchases)
-  - Monetary value (total and average spend)
+* **RFM Features**
+* Recency (days since last purchase)
+* Frequency (number of purchases)
+* Monetary value (total and average spend)
 
-- **Behavioral Features**
-  - Average basket size
-  - Purchase interval statistics
-  - Product diversity
 
-- **Temporal Features**
-  - Customer lifetime
-  - Activity in recent time windows (30/60/90 days)
+* **Behavioral Features**
+* Average basket size
+* Purchase interval statistics
+* Product diversity
 
-**Final feature count:** 18 numerical features
+
+* **Temporal Features**
+* Customer lifetime
+* Activity in recent time windows (30/60/90 days)
+
+
+
+**Final feature count:** 30 features
 
 ---
 
 ### 3. Models Evaluated
 
-| Model | ROC-AUC | Precision | Recall |
-|------|--------:|----------:|-------:|
-| Logistic Regression | 0.727 | 0.488 | 0.784 |
-| Decision Tree | 0.702 | 0.517 | 0.619 |
-| Random Forest | 0.739 | 0.551 | 0.705 |
-| Gradient Boosting | **0.734** | **0.586** | 0.523 |
-| Neural Network | 0.704 | 0.568 | 0.591 |
+| Model | Accuracy | Precision | Recall | F1-Score | ROC-AUC |
+| --- | --- | --- | --- | --- | --- |
+| Logistic Regression | 0.652 | 0.516 | 0.733 | 0.606 | **0.731** |
+| Decision Tree | 0.612 | 0.480 | 0.764 | 0.589 | 0.685 |
+| Random Forest | 0.671 | 0.537 | 0.696 | 0.606 | 0.735 |
+| Gradient Boosting | 0.680 | 0.566 | 0.526 | 0.545 | 0.729 |
+| Neural Network | 0.621 | 0.482 | 0.537 | 0.508 | 0.654 |
 
 ---
 
 ### 4. Final Model
 
-- **Selected Model:** Gradient Boosting Classifier  
-- **Reason:** Best balance of ROC-AUC, stability, and generalization  
-- **Leakage-Free Test Performance:**
-  - ROC-AUC ≈ **0.71**
-  - Precision ≈ 0.54
-  - Recall ≈ 0.55
+* **Selected Model:** Logistic Regression (Tuned)
+* **Reason:** Best balance of high recall and model stability for imbalanced data.
+* **Optimized Performance (Threshold 0.521):**
+* ROC-AUC: **0.7488**
+* Precision: **0.53**
+* Recall: **0.77**
+* F1-Score: **0.6293**
+
+
 
 Earlier experiments that produced higher scores were discarded after identifying temporal data leakage. The final metrics reflect realistic, trustworthy performance suitable for deployment.
 
@@ -101,16 +113,18 @@ Earlier experiments that produced higher scores were discarded after identifying
 ### Local Setup
 
 #### Clone Repository
+
 ```bash
 git clone https://github.com/vinay-gupta-kandula/ecommerce-churn-prediction.git
 cd ecommerce-churn-prediction
 
-
+```
 
 #### Install Dependencies
 
 ```bash
 pip install -r requirements.txt
+
 ```
 
 #### Run Data Pipeline
@@ -120,26 +134,28 @@ python src/01_data_acquisition.py
 python src/02_data_cleaning.py
 python src/03_feature_engineering.py
 python src/04_model_preparation.py
+
 ```
 
-#### Train Models(Jupyter)
+#### Train Models (Jupyter)
 
 ```bash
 jupyter notebook notebooks/05_advanced_models.ipynb
+
 ```
 
 #### Launch Web App
 
 ```bash
 streamlit run app/streamlit_app.py
+
 ```
 
 ---
 
 ## Live Application
 
-🌐 **Streamlit App URL:**
-[https://ecommerce-churn-prediction-vinay.streamlit.app/](https://ecommerce-churn-prediction-vinay.streamlit.app/)
+🌐 **Streamlit App URL:** [https://ecommerce-churn-prediction-vinay.streamlit.app/](https://ecommerce-churn-prediction-vinay.streamlit.app/)
 
 ---
 
@@ -190,6 +206,7 @@ ecommerce-churn-prediction/
 ├── presentation.pdf
 ├── requirements.txt
 └── README.md
+
 ```
 
 ---
@@ -199,7 +216,7 @@ ecommerce-churn-prediction/
 * Enables proactive churn prevention
 * Supports targeted retention campaigns
 * Reduces revenue loss at low incentive cost
-* Prioritizes recall to minimize missed churners
+* Prioritizes recall (**77%**) to minimize missed churners
 
 **Recommendations:**
 
@@ -212,7 +229,7 @@ ecommerce-churn-prediction/
 
 ## Deployment
 
-* **Platform:** Streamlit Community Cloud (Free)
+* **Platform:** Streamlit Community Cloud
 * **Deployment Guide:** `deployment/deployment_guide.md`
 * **Live URL:** [https://ecommerce-churn-prediction-vinay.streamlit.app/](https://ecommerce-churn-prediction-vinay.streamlit.app/)
 
@@ -220,8 +237,4 @@ ecommerce-churn-prediction/
 
 ## Presentation
 
-📄 **Project Presentation:**
-`presentation.pdf` (included in repository)
-
-
-
+📄 **Project Presentation:** `presentation.pdf` (included in repository)
