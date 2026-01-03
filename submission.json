@@ -3,27 +3,21 @@
   "student_name": "Vinay Gupta Kandula",
   "student_email": "23p31a05g5@acet.ac.in",
   "student_id": "23P31A05G5",
-  "submission_date": "2025-12-27",
-
+  "submission_date": "2025-12-30",
   "repository_url": "https://github.com/vinay-gupta-kandula/ecommerce-churn-prediction",
   "commit_hash": "22b932369e65014e060ea91b88c1cb132d251ec2",
-
   "live_application_url": "https://ecommerce-churn-prediction-vinay.streamlit.app/",
-
   "problem_statement": "Predict customer churn for an e-commerce business using historical transaction behavior to enable proactive retention strategies.",
-
   "dataset": {
     "name": "Online Retail II Dataset",
     "source": "https://archive.ics.uci.edu/ml/datasets/Online+Retail+II",
     "time_period": "2009-12 to 2011-12",
     "granularity": "Transactional data aggregated to customer level"
   },
-
   "churn_definition": {
     "definition": "A customer is labeled as churned if they make no purchases within a 120-day observation window following the training cutoff date.",
     "churn_rate": 0.364
   },
-
   "modeling": {
     "models_evaluated": [
       "Logistic Regression",
@@ -32,24 +26,32 @@
       "Gradient Boosting",
       "Neural Network (MLP)"
     ],
-    "final_model": "Gradient Boosting Classifier",
-    "validation_strategy": "Strict temporal split with leakage-safe feature engineering and 5-fold stratified cross-validation"
+    "final_model": "Logistic Regression (Tuned)",
+    "feature_count": 30,
+    "top_features": [
+      "rfm_total",
+      "monetary_per_txn",
+      "tenure_velocity",
+      "variety_ratio",
+      "purchases_last_90_days",
+      "avg_basket_size"
+    ],
+    "validation_strategy": "Strict temporal split with 30% held-out validation set and stratified sampling."
   },
-
   "final_model_performance": {
     "test_set_metrics": {
-      "accuracy": 0.663,
-      "precision": 0.536,
-      "recall": 0.551,
-      "f1_score": 0.543,
-      "roc_auc": 0.715
+      "accuracy": 0.67,
+      "precision": 0.53,
+      "recall": 0.77,
+      "f1_score": 0.629,
+      "roc_auc": 0.7488
     },
-    "cross_validation": {
-      "mean_roc_auc": 0.741,
-      "std_roc_auc": 0.018
+    "threshold_optimization": {
+      "optimal_threshold": 0.521,
+      "default_f1": 0.6256,
+      "optimized_f1": 0.6293
     }
   },
-
   "deployment": {
     "platform": "Streamlit Community Cloud",
     "features": [
@@ -59,16 +61,14 @@
       "Probability-based churn risk interpretation"
     ]
   },
-
   "business_impact": {
     "objective": "Reduce customer churn through early identification of high-risk customers",
     "assumptions": {
       "average_customer_lifetime_value": 500,
       "retention_offer_cost": 50
     },
-    "expected_benefit": "Improved customer retention with favorable cost-benefit tradeoff by prioritizing recall of churners"
+    "expected_benefit": "Improved customer retention with high recall (77%), ensuring the majority of potential churners are captured for intervention."
   },
-
   "phases_completed": {
     "phase_1_business_understanding": true,
     "phase_2_data_acquisition": true,
@@ -80,20 +80,17 @@
     "phase_8_deployment": true,
     "phase_9_documentation": true
   },
-
   "key_learnings": [
-    "Temporal data leakage can artificially inflate churn model performance",
-    "Behavioral aggregation is critical for customer-level churn modeling",
-    "Recall is more important than precision in churn prevention use cases",
-    "Model stability matters more than peak metrics in production systems"
+    "Logistic Regression with balanced class weights provides a strong baseline and high recall",
+    "Threshold optimization is critical for balancing precision and recall in imbalanced churn data",
+    "Behavioral ratio features like monetary_per_txn provide significant predictive power",
+    "Model stability and high recall are more valuable for proactive retention than overall accuracy"
   ],
-
   "challenges_faced": [
-    "Diagnosing and fixing temporal data leakage",
-    "Balancing model performance with business interpretability",
-    "Handling missing behavioral features robustly",
-    "Deploying a stable Streamlit app with consistent feature ordering"
+    "Optimizing thresholds to meet business requirements for recall",
+    "Handling class imbalance between active and churned customers",
+    "Maintaining feature consistency between training and deployment pipelines",
+    "Managing computational time for training more complex models like Neural Networks"
   ],
-
   "status": "Completed and deployed successfully"
 }
