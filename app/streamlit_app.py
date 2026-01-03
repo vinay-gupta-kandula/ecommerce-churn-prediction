@@ -40,12 +40,13 @@ model, imputer = load_assets()
 FEATURE_COLUMNS = [
     "frequency", "total_quantity", "max_unit_price", "country_count",
     "std_basket_size", "purchases_last_60_days", "freq_score", "monetary_per_txn",
-    "variety_ratio", "log_monetary", "monetary_value", "unique_products",
-    "avg_unit_price", "customer_tenure_days", "max_basket_size", "purchases_last_90_days",
+    "variety_ratio", "monetary_value", "unique_products",
+    "customer_tenure_days", "max_basket_size", "purchases_last_90_days",
     "monetary_score", "quantity_per_txn", "price_stability", "log_frequency",
-    "avg_order_value", "min_unit_price", "std_unit_price", "avg_basket_size",
-    "purchases_last_30_days", "recency_score", "rfm_total", "tenure_velocity",
-    "basket_growth", "revenue_per_day"
+    "recency_score", "rfm_total", "tenure_velocity", "basket_growth",
+    "avg_basket_size_log", "avg_order_value_log", "avg_unit_price_log", 
+    "basket_growth_log", "country_count_log", "monetary_value_log", 
+    "total_quantity_log", "purchases_last_30_days"
 ]
 
 OPTIMAL_THRESHOLD = 0.521
