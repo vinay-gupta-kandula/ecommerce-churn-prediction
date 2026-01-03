@@ -48,19 +48,26 @@ imputer = load_imputer()
 # ======================================================
 # FEATURE ORDER (MUST MATCH TRAINING)
 # ======================================================
-
-
 FEATURE_COLUMNS = [
-    "frequency", "monetary_value", "avg_order_value", "total_quantity", 
-    "unique_products", "min_unit_price", "max_unit_price", "avg_unit_price", 
-    "std_unit_price", "country_count", "customer_tenure_days", "avg_basket_size", 
-    "std_basket_size", "max_basket_size", "purchases_last_30_days", 
-    "purchases_last_60_days", "purchases_last_90_days", "recency_score", 
-    "freq_score", "monetary_score", "rfm_total", "monetary_per_txn", 
-    "quantity_per_txn", "tenure_velocity", "variety_ratio", "price_stability", 
-    "basket_growth", "log_monetary", "log_frequency", "revenue_per_day"
+    "recency",
+    "frequency",
+    "total_spent",
+    "avg_order_value",
+    "avg_days_between_purchases",
+    "customer_lifetime_days",
+    "unique_products",
+    "product_diversity",
+    "mean_basket_size",
+    "max_basket_size",
+    "std_basket_size",
+    "purchases_last_30_days",
+    "purchases_last_60_days",
+    "purchases_last_90_days",
+    "preferred_day",
+    "preferred_hour",
+    "rfm_score",
+    "customer_segment"
 ]
-
 
 # ======================================================
 # PREDICTION FUNCTION
