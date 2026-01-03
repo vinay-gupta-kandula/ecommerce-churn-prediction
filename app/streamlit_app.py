@@ -148,7 +148,7 @@ elif page == "4. Batch Prediction":
 # PAGE 5: PERFORMANCE & DOCS
 # ======================================================
 else:
-    st.header("📘 Model Performance")
+    st.header("📘 Model Performance & Documentation")
 
     if SUBMISSION_PATH.exists():
         with open(SUBMISSION_PATH) as f:
@@ -159,3 +159,25 @@ else:
         c2.metric("Recall", f"{metrics['recall']:.1%}")
         c3.metric("Precision", f"{metrics['precision']:.1%}")
         c4.metric("Threshold", OPTIMAL_THRESHOLD)
+
+    st.divider()
+
+    st.subheader("📌 Project Details")
+    st.markdown("""
+    **Project Title:** E-Commerce Customer Churn Prediction  
+    **Model Used:** Logistic Regression (Optimized Threshold)  
+    **Dataset Size:** 3,223 customers  
+    **Deployment:** Streamlit Cloud  
+    **Business Objective:** Early churn detection for proactive retention  
+    """)
+
+    st.divider()
+
+    st.subheader("👤 Author")
+    st.markdown("""
+    **Name:** Vinay Gupta Kandula  
+    **Role:** Data Scientist / Machine Learning Engineer  
+    **Project Type:** End-to-End ML System (Training → Evaluation → Deployment)
+    """)
+
+    st.caption("© 2026 Vinay Gupta Kandula | Churn Prediction System")
