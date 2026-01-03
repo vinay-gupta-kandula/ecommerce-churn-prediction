@@ -31,7 +31,7 @@ def load_assets():
         model = joblib.load(MODEL_PATH)
         imputer = joblib.load(IMPUTER_PATH)
         return model, imputer
-    except:
+    except Exception as e:
         return None, None
 
 model, imputer = load_assets()
@@ -67,15 +67,12 @@ page = st.sidebar.radio("Go to Page:", [
 # ======================================================
 if page == "1. Home":
     st.title("📊 E-Commerce Churn Prediction System")
-    st.markdown("""
+    st.markdown(f"""
     ### Project Overview
-    This system uses machine learning to identify high-risk customers likely to stop purchasing. 
-    By predicting churn before it happens, businesses can deploy targeted retention strategies.
+    This system identifies high-risk customers likely to churn (120 days of inactivity) using a **Tuned Logistic Regression** model.
     
-    ### Core Model
-    - **Algorithm:** Tuned Logistic Regression
-    - **Optimization:** Balanced Class Weights
-    - **Target:** Probability of 120-day inactivity.
+    **Current Model Status:** - **ROC-AUC:** 0.7488
+    - **Recall:** 77% (Optimized for proactive retention)
     """)
 
 # ======================================================
@@ -114,16 +111,19 @@ elif page == "3. Individual Prediction":
         submit = st.form_submit_button("Run Assessment")
     
     if submit:
-        # Convert to DF and reorder columns
+        # Convert to DF and force order to match imputer
         input_df = pd.DataFrame([user_input])[FEATURE_COLUMNS]
-        X_imp = imputer.transform(input_df)
-        prob = model.predict_proba(X_imp)[0, 1]
-        
-        st.subheader("Assessment Result")
-        if prob >= OPTIMAL_THRESHOLD:
-            st.error(f"🔴 HIGH RISK DETECTED ({prob:.1%})")
+        if imputer:
+            X_imp = imputer.transform(input_df)
+            prob = model.predict_proba(X_imp)[0, 1]
+            
+            st.subheader("Assessment Result")
+            if prob >= OPTIMAL_THRESHOLD:
+                st.error(f"🔴 HIGH RISK DETECTED ({prob:.1%})")
+            else:
+                st.success(f"🟢 LOW RISK DETECTED ({prob:.1%})")
         else:
-            st.success(f"🟢 LOW RISK DETECTED ({prob:.1%})")
+            st.error("Model artifacts missing.")
 
 # ======================================================
 # PAGE 4: BATCH PREDICTION
@@ -132,10 +132,10 @@ elif page == "4. Batch Prediction":
     st.header("📁 Bulk Processing (CSV Upload)")
     st.write("Upload a CSV file. The app will automatically clean and reorder columns.")
     
-    # SOLVED NAME ERROR: Assigned variable 'file' here
+    # FIX: Defined 'file' here to prevent NameError
     file = st.file_uploader("Choose CSV File", type="csv")
     
-    if file:
+    if file is not None:
         df_batch = pd.read_csv(file)
         # Clean columns: strip spaces and convert to lowercase
         df_batch.columns = df_batch.columns.str.strip().str.lower()
@@ -146,25 +146,28 @@ elif page == "4. Batch Prediction":
         if missing:
             st.error(f"❌ Missing columns in CSV: {missing}")
         else:
-            # SOLVED VALUE ERROR: Reorder columns to match imputer
+            # FIX: Reorder columns to match imputer exactly to prevent ValueError
             X_batch = df_batch[FEATURE_COLUMNS]
-            X_imp = imputer.transform(X_batch)
-            probs = model.predict_proba(X_imp)[:, 1]
-            
-            df_batch['Churn_Probability'] = probs
-            df_batch['Risk_Level'] = np.where(probs >= OPTIMAL_THRESHOLD, "HIGH", "LOW")
-            
-            st.write("### Prediction Results (Top 50)")
-            st.dataframe(df_batch[['Risk_Level', 'Churn_Probability'] + FEATURE_COLUMNS].head(50))
-            
-            csv_output = df_batch.to_csv(index=False).encode('utf-8')
-            st.download_button("📥 Download Results", data=csv_output, file_name="churn_results.csv")
+            if imputer and model:
+                X_imp = imputer.transform(X_batch)
+                probs = model.predict_proba(X_imp)[:, 1]
+                
+                df_batch['Churn_Probability'] = probs
+                df_batch['Risk_Level'] = np.where(probs >= OPTIMAL_THRESHOLD, "HIGH", "LOW")
+                
+                st.write("### Prediction Results (Top 50)")
+                st.dataframe(df_batch[['Risk_Level', 'Churn_Probability'] + FEATURE_COLUMNS].head(50))
+                
+                csv_output = df_batch.to_csv(index=False).encode('utf-8')
+                st.download_button("📥 Download Results", data=csv_output, file_name="churn_results.csv")
+            else:
+                st.error("Model or Imputer not loaded.")
 
 # ======================================================
 # PAGE 5: PERFORMANCE & DOCS
 # ======================================================
 else:
-    st.header("📘 Documentation & Technical Evaluation")
+    st.header("📘 Documentation & Evaluation")
     
     if SUBMISSION_PATH.exists():
         with open(SUBMISSION_PATH) as f:
@@ -178,15 +181,26 @@ else:
         m4.metric("Threshold", f"{OPTIMAL_THRESHOLD}")
     
     st.divider()
-    st.markdown("""
-    ### Technical Glossary
-    - **Revenue Per Day:** Total spent divided by (Customer Tenure + 1).
-    - **Variety Ratio:** Count of unique products / Total quantity of items.
-    - **Tenure Velocity:** Rate of engagement over the customer's lifespan.
-    """)
     
     c1, c2 = st.columns(2)
     with c1:
-        st.image(str(BASE_DIR / "visualizations" / "roc_curve.png"), caption="ROC Curve Analysis")
+        st.markdown("""
+        ### Feature Glossary
+        - **Revenue Per Day:** Spent / (Tenure + 1).
+        - **Variety Ratio:** Unique SKU Count / Total Quantity.
+        - **Price Stability:** SD of prices across orders.
+        """)
     with c2:
-        st.image(str(BASE_DIR / "visualizations" / "feature_importance.png"), caption="Top Predictive Features")
+        st.markdown(f"""
+        ### Prediction Logic
+        We use a probability threshold of **{OPTIMAL_THRESHOLD}**. 
+        If $P(Churn) \geq {OPTIMAL_THRESHOLD}$, the customer is flagged for high-priority retention.
+        """)
+
+    # Visualizations
+    v1, v2 = st.columns(2)
+    roc_img = BASE_DIR / "visualizations" / "roc_curve.png"
+    fi_img = BASE_DIR / "visualizations" / "feature_importance.png"
+    
+    if roc_img.exists(): v1.image(str(roc_img), caption="ROC Curve")
+    if fi_img.exists(): v2.image(str(fi_img), caption="Feature Drivers")
