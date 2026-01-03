@@ -59,6 +59,8 @@ data/processed/*.parquet
 ####################################
 models/*.pkl
 models/*.joblib
+!models/feature_columns.pkl
+
 
 ####################################
 # Streamlit
