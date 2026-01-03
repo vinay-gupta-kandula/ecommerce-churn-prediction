@@ -9,7 +9,7 @@ import seaborn as sns
 from pathlib import Path
 
 # ======================================================
-# 1. GLOBAL CONFIGURATION
+# GLOBAL CONFIGURATION
 # ======================================================
 st.set_page_config(
     page_title="E-Commerce Churn Dashboard",
@@ -36,7 +36,7 @@ def load_assets():
 
 model, imputer = load_assets()
 
-# Features used in training (30 features)
+# STRICT FEATURE LIST (30 FEATURES)
 FEATURE_COLUMNS = [
     "frequency", "monetary_value", "avg_order_value", "total_quantity", 
     "unique_products", "min_unit_price", "max_unit_price", "avg_unit_price", 
@@ -56,125 +56,106 @@ OPTIMAL_THRESHOLD = 0.521
 st.sidebar.title("Navigation")
 page = st.sidebar.radio("Go to Page:", [
     "1. Home", 
-    "2. Exploratory Analysis", 
+    "2. Data Insights", 
     "3. Individual Prediction", 
     "4. Batch Prediction", 
-    "5. Model Performance"
+    "5. Performance & Docs"
 ])
 
 # ======================================================
 # PAGE 1: HOME
 # ======================================================
 if page == "1. Home":
-    st.title("📊 E-Commerce Customer Churn Prediction")
-    st.image("https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?auto=format&fit=crop&q=80&w=1000", use_column_width=True)
-    
+    st.title("📊 E-Commerce Churn Prediction System")
     st.markdown("""
-    ### Project Overview
-    This system uses machine learning to identify high-risk customers likely to stop purchasing. 
-    By predicting churn before it happens, businesses can deploy targeted retention strategies.
-
-    ### Business Objective
-    - **Identify** high-risk customers with >70% recall.
-    - **Analyze** key behavioral drivers of churn.
-    - **Optimize** marketing spend on customers who actually need incentives.
-
-    ### How to use this Dashboard:
-    - Use **Exploratory Analysis** to see trends in the data.
-    - Use **Individual Prediction** for a quick check on one customer.
-    - Use **Batch Prediction** to process a CSV list of thousands of customers.
+    ### Welcome
+    This interactive dashboard predicts the likelihood of customers churning from an e-commerce platform. 
+    It is powered by a **Tuned Logistic Regression** model designed to maximize recall for high-impact business decisions.
+    
+    ### Core Logic
+    - **Target:** Customers who make no purchases for 120 days.
+    - **Algorithm:** Logistic Regression (Balanced).
+    - **Features:** Behavioral RFM metrics + Temporal Ratios.
     """)
 
 # ======================================================
-# PAGE 2: EXPLORATORY ANALYSIS
+# PAGE 2: DATA INSIGHTS
 # ======================================================
-elif page == "2. Exploratory Analysis":
-    st.header("📈 Data Insights & Trends")
-    
+elif page == "2. Data Insights":
+    st.header("📈 Deep Dive into Training Data")
     if DATA_PATH.exists():
         df = pd.read_csv(DATA_PATH)
-        
         c1, c2 = st.columns(2)
-        
         with c1:
-            st.subheader("Churn Distribution")
+            st.subheader("Customer Balance")
             fig, ax = plt.subplots()
             sns.countplot(x='churn', data=df, palette='viridis', ax=ax)
             st.pyplot(fig)
-        
         with c2:
-            st.subheader("Monetary Value vs Churn")
+            st.subheader("Average Spending Patterns")
             fig, ax = plt.subplots()
-            sns.boxplot(x='churn', y='monetary_value', data=df, ax=ax)
-            ax.set_ylim(0, 5000) # Zoom in
+            sns.boxplot(x='churn', y='monetary_per_txn', data=df, ax=ax)
+            ax.set_ylim(0, 1000)
             st.pyplot(fig)
-            
-        st.subheader("Feature Correlations")
-        fig, ax = plt.subplots(figsize=(10, 6))
-        corr = df[['rfm_total', 'monetary_per_txn', 'tenure_velocity', 'churn']].corr()
-        sns.heatmap(corr, annot=True, cmap='coolwarm', ax=ax)
-        st.pyplot(fig)
     else:
-        st.error("Processed data file not found. Please run the pipeline first.")
+        st.warning("Data file not found for visualization.")
 
 # ======================================================
 # PAGE 3: INDIVIDUAL PREDICTION
 # ======================================================
 elif page == "3. Individual Prediction":
-    st.header("🔍 Single Customer Assessment")
-    st.info(f"Targeting a Recall of 77% using threshold {OPTIMAL_THRESHOLD}")
-
-    with st.form("single_pred"):
+    st.header("🔍 Manual Customer Assessment")
+    with st.form("manual_form"):
         cols = st.columns(3)
         inputs = {}
         for i, feat in enumerate(FEATURE_COLUMNS):
             with cols[i % 3]:
                 inputs[feat] = st.number_input(feat.replace("_", " ").title(), value=0.0)
-        
-        btn = st.form_submit_button("Predict Churn")
+        btn = st.form_submit_button("Run Model")
     
     if btn:
         input_df = pd.DataFrame([inputs])
-        X_scaled = imputer.transform(input_df[FEATURE_COLUMNS])
-        prob = model.predict_proba(X_scaled)[0, 1]
+        # Force column order
+        X_final = input_df[FEATURE_COLUMNS]
+        X_imp = imputer.transform(X_final)
+        prob = model.predict_proba(X_imp)[0, 1]
         
-        st.subheader("Prediction Result")
         if prob >= OPTIMAL_THRESHOLD:
-            st.error(f"**HIGH RISK** (Probability: {prob:.2%})")
-            st.write("💡 Recommendation: Send a high-value discount coupon.")
+            st.error(f"High Risk Detected: {prob:.1%}")
         else:
-            st.success(f"**LOW RISK** (Probability: {prob:.2%})")
-            st.write("💡 Recommendation: Standard engagement via newsletter.")
+            st.success(f"Low Risk Detected: {prob:.1%}")
 
 # ======================================================
 # PAGE 4: BATCH PREDICTION
 # ======================================================
 elif page == "4. Batch Prediction":
-    st.header("📁 Bulk Customer Scoring")
-    st.write("Upload a CSV file to generate churn probabilities for your entire database.")
-    
+    st.header("📁 Bulk Processing (CSV)")
     file = st.file_uploader("Upload CSV", type="csv")
     if file:
-        df_batch = pd.read_csv(file)
-        # Prediction
-        X_batch = imputer.transform(df_batch[FEATURE_COLUMNS])
-        probs = model.predict_proba(X_batch)[:, 1]
+        df_raw = pd.read_csv(file)
+        df_raw.columns = df_raw.columns.str.strip() # Clean column names
         
-        df_batch['Churn_Probability'] = probs
-        df_batch['Prediction'] = np.where(probs >= OPTIMAL_THRESHOLD, "CHURN", "ACTIVE")
-        
-        st.write("### Scored Results")
-        st.dataframe(df_batch[['Churn_Probability', 'Prediction'] + FEATURE_COLUMNS])
-        
-        csv = df_batch.to_csv(index=False).encode('utf-8')
-        st.download_button("Download Predictions", csv, "scored_customers.csv", "text/csv")
+        # Validate all 30 features are present
+        missing = [c for c in FEATURE_COLUMNS if c not in df_raw.columns]
+        if missing:
+            st.error(f"Missing columns: {missing}")
+        else:
+            # Predict using the specified feature list order
+            X_batch = df_raw[FEATURE_COLUMNS]
+            X_imp = imputer.transform(X_batch)
+            probs = model.predict_proba(X_imp)[:, 1]
+            
+            df_raw['Probability'] = probs
+            df_raw['Result'] = np.where(probs >= OPTIMAL_THRESHOLD, "CHURN", "ACTIVE")
+            st.dataframe(df_raw[['Result', 'Probability'] + FEATURE_COLUMNS])
 
 # ======================================================
-# PAGE 5: MODEL PERFORMANCE
+# PAGE 5: PERFORMANCE & DOCS
 # ======================================================
-elif page == "5. Model Performance":
-    st.header("⚖️ Model Evaluation Metrics")
+else:
+    st.header("📘 Documentation & Performance")
     
+    # 5.1 Technical Metrics
     if SUBMISSION_PATH.exists():
         with open(SUBMISSION_PATH) as f:
             sub = json.load(f)
@@ -184,14 +165,24 @@ elif page == "5. Model Performance":
         m1.metric("ROC-AUC", f"{perf['roc_auc']:.4f}")
         m2.metric("Recall", f"{perf['recall']:.1%}")
         m3.metric("Precision", f"{perf['precision']:.1%}")
-        m4.metric("F1 Score", f"{perf['f1_score']:.4f}")
-
-        st.divider()
-        st.subheader("Visual Evaluation")
-        v_cols = st.columns(2)
-        with v_cols[0]:
-            st.image(str(BASE_DIR / "visualizations" / "roc_curve.png"), caption="ROC Curve")
-        with v_cols[1]:
-            st.image(str(BASE_DIR / "visualizations" / "feature_importance.png"), caption="Feature Drivers")
-    else:
-        st.warning("Submission file not found.")
+        m4.metric("Optimal Threshold", f"{OPTIMAL_THRESHOLD}")
+        
+    # 5.2 Documentation Text
+    st.divider()
+    st.markdown(f"""
+    ### Feature Glossary
+    - **Tenure Velocity:** The rate of purchase relative to customer age.
+    - **Variety Ratio:** Unique products divided by total quantity.
+    - **Price Stability:** Standard deviation of unit prices across orders.
+    
+    ### Optimization Logic
+    The model is tuned to a probability threshold of **{OPTIMAL_THRESHOLD}**. 
+    Lowering this threshold increases **Recall** (capturing more churners) while increasing it improves **Precision** (avoiding false alarms).
+    """)
+    
+    # 5.3 Visuals
+    c1, c2 = st.columns(2)
+    with c1:
+        st.image(str(BASE_DIR / "visualizations" / "roc_curve.png"), caption="ROC Analysis")
+    with c2:
+        st.image(str(BASE_DIR / "visualizations" / "feature_importance.png"), caption="Key Prediction Drivers")
