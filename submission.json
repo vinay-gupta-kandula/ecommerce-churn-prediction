@@ -5,7 +5,7 @@
   "student_id": "23P31A05G5",
   "submission_date": "2025-12-30",
   "repository_url": "https://github.com/vinay-gupta-kandula/ecommerce-churn-prediction",
-  "commit_hash": "22b932369e65014e060ea91b88c1cb132d251ec2",
+  "commit_hash": "36dbf326f97196a277caa24bf1d3dcb161632d7",
   "live_application_url": "https://ecommerce-churn-prediction-vinay.streamlit.app/",
   "problem_statement": "Predict customer churn for an e-commerce business using historical transaction behavior to enable proactive retention strategies.",
   "dataset": {
