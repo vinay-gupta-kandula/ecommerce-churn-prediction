@@ -6,48 +6,41 @@ import pandas as pd
 import streamlit as st
 import matplotlib.pyplot as plt
 from pathlib import Path
-from sklearn.metrics import roc_curve, auc
 
 # ======================================================
 # STREAMLIT CONFIG
 # ======================================================
 st.set_page_config(
-    page_title="E-Commerce Customer Churn Prediction",
+    page_title="E-Commerce Churn Predictor",
+    page_icon="📊",
     layout="wide"
 )
 
 # ======================================================
-# PATHS (CLOUD + LOCAL SAFE)
+# PATHS
 # ======================================================
 BASE_DIR = Path(__file__).resolve().parents[1]
-
 MODEL_PATH = BASE_DIR / "models" / "best_model.pkl"
 IMPUTER_PATH = BASE_DIR / "models" / "imputer.pkl"
-# Path to your updated submission.json for accurate metrics
-SUBMISSION_PATH = BASE_DIR / "submission.json" 
+SUBMISSION_PATH = BASE_DIR / "submission.json"
 
 # ======================================================
-# LOAD ARTIFACTS (CACHED)
+# LOAD ARTIFACTS
 # ======================================================
 @st.cache_resource
-def load_model():
-    if not MODEL_PATH.exists():
-        st.error(f"❌ model not found at {MODEL_PATH}")
-        st.stop()
-    return joblib.load(MODEL_PATH)
+def load_assets():
+    try:
+        model = joblib.load(MODEL_PATH)
+        imputer = joblib.load(IMPUTER_PATH)
+        return model, imputer
+    except Exception as e:
+        st.error(f"Error loading model assets: {e}")
+        return None, None
 
-@st.cache_resource
-def load_imputer():
-    if not IMPUTER_PATH.exists():
-        st.error(f"❌ imputer not found at {IMPUTER_PATH}")
-        st.stop()
-    return joblib.load(IMPUTER_PATH)
-
-model = load_model()
-imputer = load_imputer()
+model, imputer = load_assets()
 
 # ======================================================
-# FEATURE ORDER (UPDATED TO MATCH YOUR 30 FEATURES)
+# CONSTANTS (Matches your final training pipeline)
 # ======================================================
 FEATURE_COLUMNS = [
     "frequency", "monetary_value", "avg_order_value", "total_quantity", 
@@ -60,150 +53,111 @@ FEATURE_COLUMNS = [
     "basket_growth", "log_monetary", "log_frequency", "revenue_per_day"
 ]
 
-# OPTIMAL THRESHOLD FROM YOUR EVALUATION
 OPTIMAL_THRESHOLD = 0.521
 
 # ======================================================
-# PREDICTION FUNCTION
-# ======================================================
-def predict(df):
-    # Ensure columns match training order
-    X = df[FEATURE_COLUMNS]
-    X_imp = imputer.transform(X)
-    prob = model.predict_proba(X_imp)[:, 1]
-    label = (prob >= OPTIMAL_THRESHOLD).astype(int)
-    return label, prob
-
-# ======================================================
-# SIDEBAR NAVIGATION
+# APP LOGIC
 # ======================================================
 st.sidebar.title("Navigation")
-page = st.sidebar.radio(
-    "Go to",
-    ["Home", "Single Prediction", "Batch Prediction", "Model Dashboard", "Documentation"]
-)
+page = st.sidebar.radio("Go to", ["Home", "Predict Individual", "Batch Prediction", "Documentation"])
 
-# ======================================================
-# PAGE 1: HOME
-# ======================================================
 if page == "Home":
     st.title("📊 E-Commerce Customer Churn Prediction")
-
     st.markdown("""
-    This application predicts **customer churn risk** using historical
-    transactional behavior and a **Tuned Logistic Regression model**.
-
-    **Key Metrics (Test Set):**
+    Welcome! This dashboard provides real-time churn risk assessment for e-commerce customers.
+    The underlying engine uses a **Tuned Logistic Regression** model optimized for high recall.
     """)
-
+    
+    # Display Latest Metrics from submission.json
     if SUBMISSION_PATH.exists():
         with open(SUBMISSION_PATH) as f:
-            sub_data = json.load(f)
-            metrics = sub_data["final_model_performance"]["test_set_metrics"]
-        
+            data = json.load(f)
+            metrics = data["final_model_performance"]["test_set_metrics"]
+            
         c1, c2, c3, c4 = st.columns(4)
         c1.metric("ROC-AUC", f"{metrics['roc_auc']:.4f}")
-        c2.metric("Recall", f"{metrics['recall']:.2%}")
-        c3.metric("Precision", f"{metrics['precision']:.2%}")
-        c4.metric("F1-Score", f"{metrics['f1_score']:.3f}")
-    else:
-        st.info("Metrics data available in Model Dashboard.")
-
-# ======================================================
-# PAGE 2: SINGLE PREDICTION
-# ======================================================
-elif page == "Single Prediction":
-    st.header("🔍 Single Customer Prediction")
-    st.info(f"Using Optimal Decision Threshold: {OPTIMAL_THRESHOLD}")
-
-    inputs = {}
-    cols = st.columns(3)
-
-    for i, feature in enumerate(FEATURE_COLUMNS):
-        with cols[i % 3]:
-            inputs[feature] = st.number_input(feature.replace("_", " ").title(), value=0.0)
-
-    if st.button("Predict Churn Risk"):
-        df_input = pd.DataFrame([inputs])
-        label, prob = predict(df_input)
-
-        st.subheader("Result")
-        st.metric("Churn Probability", f"{prob[0]:.2%}")
-
-        if prob[0] >= 0.7:
-            st.error(f"🔴 HIGH RISK (Prob > 70%) — Retention action required.")
-        elif prob[0] >= OPTIMAL_THRESHOLD:
-            st.warning(f"🟠 MEDIUM RISK (Prob > {OPTIMAL_THRESHOLD*100:.1f}%) — Potential churner.")
-        else:
-            st.success("🟢 LOW RISK — Customer is likely to remain active.")
-
-# ======================================================
-# PAGE 3: BATCH PREDICTION
-# ======================================================
-elif page == "Batch Prediction":
-    st.header("📁 Batch Prediction")
-    st.markdown("Upload a CSV containing the required features for multiple customers.")
-
-    uploaded = st.file_uploader("Upload CSV file", type="csv")
-
-    if uploaded:
-        df = pd.read_csv(uploaded)
-
-        missing = set(FEATURE_COLUMNS) - set(df.columns)
-        if missing:
-            st.error(f"Missing columns in CSV: {list(missing)}")
-            st.stop()
-
-        label, prob = predict(df)
-
-        df["churn_probability"] = prob
-        df["churn_prediction"] = np.where(prob >= OPTIMAL_THRESHOLD, "CHURN", "ACTIVE")
-
-        st.write("### Prediction Results (Preview)")
-        st.dataframe(df[["churn_probability", "churn_prediction"] + FEATURE_COLUMNS].head())
-
-        csv = df.to_csv(index=False).encode("utf-8")
-        st.download_button(
-            "⬇️ Download Full Results",
-            csv,
-            "churn_batch_results.csv",
-            "text/csv"
-        )
-
-# ======================================================
-# PAGE 4: MODEL DASHBOARD
-# ======================================================
-elif page == "Model Dashboard":
-    st.header("📈 Model Performance Summary")
-
-    if SUBMISSION_PATH.exists():
-        with open(SUBMISSION_PATH) as f:
-            sub_data = json.load(f)
-            st.write("### Best Model: Logistic Regression (Tuned)")
-            st.json(sub_data["final_model_performance"])
-            
-            st.write("### Feature Importance")
-            st.image("visualizations/feature_importance.png")
-    else:
-        st.warning("Please ensure visualizations/ and submission.json exist in the project root.")
-
-# ======================================================
-# PAGE 5: DOCUMENTATION
-# ======================================================
-else:
-    st.header("📘 Project Documentation")
-
-    st.markdown(f"""
-    **Model Architecture**
-    - Algorithm: **Logistic Regression** (Balanced Class Weights)
-    - Threshold: **{OPTIMAL_THRESHOLD}** (Optimized for F1-Score)
-    - Feature Count: **30 Engineered Features**
+        c2.metric("Recall (Sensitivity)", f"{metrics['recall']:.1%}")
+        c3.metric("Precision", f"{metrics['precision']:.1%}")
+        c4.metric("Optimal Threshold", f"{OPTIMAL_THRESHOLD}")
     
-    **Success Criteria**
-    - Achieved ROC-AUC: **0.7488**
-    - Target Recall: **> 70%**
-    - Handling Strategy: Temporal split to prevent data leakage.
+    st.image(str(BASE_DIR / "visualizations" / "roc_curve.png"), caption="Final Model ROC Curve")
 
-    **Author**
+elif page == "Predict Individual":
+    st.header("🔍 Individual Customer Assessment")
+    st.info(f"Threshold: {OPTIMAL_THRESHOLD} | Features: {len(FEATURE_COLUMNS)}")
+
+    with st.form("prediction_form"):
+        cols = st.columns(3)
+        user_input = {}
+        
+        for i, feat in enumerate(FEATURE_COLUMNS):
+            with cols[i % 3]:
+                # Prettify labels (e.g., monetary_per_txn -> Monetary Per Txn)
+                label = feat.replace("_", " ").title()
+                user_input[feat] = st.number_input(label, value=0.0)
+        
+        submit = st.form_submit_button("Calculate Risk Score")
+
+    if submit:
+        input_df = pd.DataFrame([user_input])
+        X_processed = imputer.transform(input_df[FEATURE_COLUMNS])
+        
+        prob = model.predict_proba(X_processed)[0, 1]
+        is_churn = prob >= OPTIMAL_THRESHOLD
+        
+        st.subheader("Results")
+        col_res1, col_res2 = st.columns(2)
+        
+        with col_res1:
+            st.metric("Churn Probability", f"{prob:.2%}")
+        
+        with col_res2:
+            if is_churn:
+                st.error("Status: HIGH RISK (Likely to Churn)")
+            else:
+                st.success("Status: LOW RISK (Likely Active)")
+        
+        # Visualization of risk
+        st.progress(prob)
+
+elif page == "Batch Prediction":
+    st.header("📁 Batch Processing")
+    st.write("Upload a CSV file with customer behavior data to receive risk scores.")
+    
+    uploaded_file = st.file_uploader("Upload CSV", type=["csv"])
+    
+    if uploaded_file:
+        df = pd.read_csv(uploaded_file)
+        
+        # Validation
+        missing_cols = [c for c in FEATURE_COLUMNS if c not in df.columns]
+        if missing_cols:
+            st.error(f"CSV missing required columns: {missing_cols}")
+        else:
+            X_batch = imputer.transform(df[FEATURE_COLUMNS])
+            probs = model.predict_proba(X_batch)[:, 1]
+            
+            df['Churn_Probability'] = probs
+            df['Churn_Risk'] = np.where(probs >= OPTIMAL_THRESHOLD, "High Risk", "Low Risk")
+            
+            st.write("### Preview of Scored Data")
+            st.dataframe(df[['Churn_Probability', 'Churn_Risk'] + FEATURE_COLUMNS].head(20))
+            
+            csv = df.to_csv(index=False).encode('utf-8')
+            st.download_button("Download Scored CSV", data=csv, file_name="churn_predictions.csv", mime="text/csv")
+
+else:
+    st.header("📘 Documentation")
+    st.markdown(f"""
+    ### Model Overview
+    - **Algorithm:** Logistic Regression (with Balanced Class Weights)
+    - **Features Used:** 30 (RFM, Temporal, and Behavioral Ratios)
+    - **Target:** Probability of 120-day inactivity.
+    
+    ### How to Interpret Scores
+    - **Probability < {OPTIMAL_THRESHOLD}:** Customer shows stable behavior.
+    - **Probability >= {OPTIMAL_THRESHOLD}:** Customer shows signs of declining activity. Retention intervention (email, discount) recommended.
+    
+    ### Developed by:
     Vinay Gupta Kandula
     """)
