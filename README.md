@@ -1,5 +1,3 @@
-Here is the updated README with the values modified to match your latest evaluation results and model performance.
-
 # 📊 E-Commerce Customer Churn Prediction
 
 ## Project Overview
